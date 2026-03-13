@@ -1,0 +1,22 @@
+Package: tika-mcp
+Version: 1.0.0
+Architecture: amd64
+Maintainer: Your Name <you@example.com>
+Installed-Size: 0
+Depends: systemd
+Recommends: default-jre-headless | java17-runtime-headless
+Suggests: tesseract-ocr
+Section: utils
+Priority: optional
+Homepage: https://github.com/your-org/tika-mcp
+Description: Apache Tika MCP (Model Context Protocol) server
+ tika-mcp exposes Apache Tika document processing capabilities
+ as an MCP server, allowing LLM agents to extract text, metadata,
+ and content-type information from over 1,000 document formats
+ including PDF, DOCX, XLSX, PPTX, HTML, images (via OCR), and email.
+ .
+ Supported transports: stdio (for local MCP clients such as Claude
+ Desktop) and HTTP (for remote or networked MCP clients).
+ .
+ Apache Tika server must be running and accessible; the recommended
+ setup uses the companion tika.service unit also shipped in this package.

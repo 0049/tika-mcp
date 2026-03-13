@@ -1,0 +1,41 @@
+#!/bin/sh
+# postrm: runs after tika-mcp files have been removed.
+set -e
+
+TIKA_MCP_USER=tika-mcp
+TIKA_MCP_GROUP=tika-mcp
+
+case "$1" in
+purge)
+    # Full purge: remove config, logs, service accounts
+    rm -rf /etc/tika-mcp
+    rm -rf /var/log/tika-mcp
+
+    if getent passwd "$TIKA_MCP_USER" > /dev/null 2>&1; then
+        deluser --system "$TIKA_MCP_USER" || true
+    fi
+    if getent group "$TIKA_MCP_GROUP" > /dev/null 2>&1; then
+        delgroup --system "$TIKA_MCP_GROUP" || true
+    fi
+
+    if [ -d /run/systemd/system ]; then
+        systemctl daemon-reload || true
+    fi
+    ;;
+
+remove)
+    if [ -d /run/systemd/system ]; then
+        systemctl daemon-reload || true
+    fi
+    ;;
+
+upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+    ;;
+
+*)
+    echo "postrm called with unknown argument '$1'" >&2
+    exit 1
+    ;;
+esac
+
+exit 0

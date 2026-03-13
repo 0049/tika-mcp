@@ -1,0 +1,64 @@
+[Unit]
+Description=Apache Tika Server
+Documentation=https://tika.apache.org/
+After=network.target
+AssertPathExists=/opt/tika/tika-server.jar
+
+[Service]
+# --- Identity ---
+User=tika
+Group=tika
+# Create these with:
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin tika
+
+# --- Binary ---
+ExecStart=/usr/bin/java \
+    -Xms256m \
+    -Xmx2g \
+    -jar /opt/tika/tika-server.jar \
+    --host 127.0.0.1 \
+    --port 9998
+
+EnvironmentFile=-/etc/tika/tika.env
+
+# --- Restart policy ---
+Restart=on-failure
+RestartSec=10s
+StartLimitIntervalSec=120s
+StartLimitBurst=3
+
+# --- Standard I/O ---
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tika
+
+# --- Hardening ---
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+NoNewPrivileges=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_INET AF_INET6
+SystemCallArchitectures=native
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+
+# Tika needs write access for temp file unpacking
+ReadWritePaths=/tmp /var/cache/tika
+
+# Java needs a wider syscall set than a typical Go binary
+SystemCallFilter=@system-service @process @signal
+
+LimitNOFILE=65536
+TimeoutStartSec=60s
+TimeoutStopSec=30s
+
+[Install]
+WantedBy=multi-user.target

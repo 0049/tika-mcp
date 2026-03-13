@@ -1,0 +1,83 @@
+[Unit]
+Description=Apache Tika MCP Server
+Documentation=https://github.com/your-org/tika-mcp
+After=network.target tika.service
+Wants=tika.service
+
+[Service]
+# --- Identity ---
+User=tika-mcp
+Group=tika-mcp
+# Create these with:
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin tika-mcp
+
+# --- Binary & arguments ---
+ExecStart=/usr/local/bin/tika-mcp \
+    --transport http \
+    --addr :8080 \
+    --tika-url http://127.0.0.1:9998
+
+# Graceful reload: re-exec on SIGHUP (no config file to reload, but keeps
+# the socket open so clients aren't dropped hard)
+ExecReload=/bin/kill -HUP $MAINPID
+
+# --- Restart policy ---
+Restart=on-failure
+RestartSec=5s
+StartLimitIntervalSec=60s
+StartLimitBurst=5
+
+# --- Environment ---
+# Override any of these in /etc/tika-mcp/tika-mcp.env
+EnvironmentFile=-/etc/tika-mcp/tika-mcp.env
+Environment=MCP_TRANSPORT=http
+Environment=MCP_ADDR=:8080
+Environment=TIKA_URL=http://127.0.0.1:9998
+
+# --- Standard I/O ---
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tika-mcp
+
+# --- Hardening ---
+# Filesystem
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/tika-mcp
+PrivateTmp=true
+PrivateDevices=true
+
+# Capabilities & privileges
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Network: allow only IPv4/IPv6; no Unix domain socket creation
+RestrictAddressFamilies=AF_INET AF_INET6
+
+# System calls
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+
+# Misc isolation
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+MemoryDenyWriteExecute=true
+RemoveIPC=true
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=512
+TimeoutStartSec=30s
+TimeoutStopSec=15s
+
+[Install]
+WantedBy=multi-user.target

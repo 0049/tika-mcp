@@ -1,0 +1,79 @@
+#!/bin/sh
+# postinst: runs after tika-mcp files are unpacked onto the filesystem.
+set -e
+
+BINARY=tika-mcp
+TIKA_MCP_USER=tika-mcp
+TIKA_MCP_GROUP=tika-mcp
+TIKA_USER=tika
+TIKA_GROUP=tika
+
+case "$1" in
+configure)
+    # ----------------------------------------------------------------
+    # Create service accounts if they don't already exist
+    # ----------------------------------------------------------------
+    if ! getent group "$TIKA_MCP_GROUP" > /dev/null 2>&1; then
+        addgroup --system "$TIKA_MCP_GROUP"
+    fi
+    if ! getent passwd "$TIKA_MCP_USER" > /dev/null 2>&1; then
+        adduser --system --ingroup "$TIKA_MCP_GROUP" \
+                --no-create-home --shell /usr/sbin/nologin \
+                "$TIKA_MCP_USER"
+    fi
+
+    if ! getent group "$TIKA_GROUP" > /dev/null 2>&1; then
+        addgroup --system "$TIKA_GROUP"
+    fi
+    if ! getent passwd "$TIKA_USER" > /dev/null 2>&1; then
+        adduser --system --ingroup "$TIKA_GROUP" \
+                --no-create-home --shell /usr/sbin/nologin \
+                "$TIKA_USER"
+    fi
+
+    # ----------------------------------------------------------------
+    # Directories
+    # ----------------------------------------------------------------
+    install -d -m 750 -o "$TIKA_MCP_USER" -g "$TIKA_MCP_GROUP" \
+        /var/log/tika-mcp
+    install -d -m 750 -o "$TIKA_USER"     -g "$TIKA_GROUP" \
+        /var/cache/tika
+
+    # Protect the environment / config file
+    chown root:"$TIKA_MCP_GROUP" /etc/tika-mcp/tika-mcp.env
+    chmod 640 /etc/tika-mcp/tika-mcp.env
+
+    # ----------------------------------------------------------------
+    # systemd integration
+    # ----------------------------------------------------------------
+    if [ -d /run/systemd/system ]; then
+        systemctl daemon-reload
+
+        # Enable (but don't start) on first install
+        if [ -z "$2" ]; then
+            systemctl enable tika.service     || true
+            systemctl enable tika-mcp.service || true
+            echo ""
+            echo "tika-mcp installed. To start the service:"
+            echo "  sudo systemctl start tika.service"
+            echo "  sudo systemctl start tika-mcp.service"
+            echo ""
+            echo "NOTE: tika.service requires a Tika JAR at /opt/tika/tika-server.jar"
+            echo "Download from: https://tika.apache.org/download.html"
+        else
+            # Upgrade: restart if already running
+            systemctl try-restart tika-mcp.service || true
+        fi
+    fi
+    ;;
+
+abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+*)
+    echo "postinst called with unknown argument '$1'" >&2
+    exit 1
+    ;;
+esac
+
+exit 0

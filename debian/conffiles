@@ -1,0 +1,3 @@
+/etc/tika-mcp/tika-mcp.env
+/etc/systemd/system/tika-mcp.service
+/etc/systemd/system/tika.service

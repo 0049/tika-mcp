@@ -1,0 +1,8 @@
+tika-mcp (1.0.0) stable; urgency=low
+
+  * Initial release.
+  * MCP server exposing Apache Tika REST API as 12 MCP tools.
+  * Supports stdio and HTTP transports.
+  * Includes hardened systemd unit files for tika-mcp and tika.
+
+ -- Your Name <you@example.com>  Tue, 10 Mar 2026 00:00:00 +0000

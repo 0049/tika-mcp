@@ -1,0 +1,24 @@
+#!/bin/sh
+# prerm: runs before tika-mcp files are removed from the filesystem.
+set -e
+
+case "$1" in
+remove|upgrade|deconfigure)
+    if [ -d /run/systemd/system ]; then
+        # Stop and disable the MCP server before files are removed.
+        # Leave tika.service running — it may be used by other software.
+        systemctl stop    tika-mcp.service 2>/dev/null || true
+        systemctl disable tika-mcp.service 2>/dev/null || true
+    fi
+    ;;
+
+failed-upgrade)
+    ;;
+
+*)
+    echo "prerm called with unknown argument '$1'" >&2
+    exit 1
+    ;;
+esac
+
+exit 0

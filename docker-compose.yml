@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  # Apache Tika server
+  tika:
+    image: apache/tika:2.9.1-full   # -full includes OCR support
+    ports:
+      - "9998:9998"
+    restart: unless-stopped
+
+  # tika-mcp in HTTP transport mode (for remote MCP clients)
+  tika-mcp-http:
+    build: .
+    environment:
+      TIKA_URL: http://tika:9998
+      MCP_TRANSPORT: http
+      MCP_ADDR: ":8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - tika
+    restart: unless-stopped
+    command: ["--transport", "http", "--addr", ":8080"]
+
+  # tika-mcp in stdio mode is used via CLI (see README)
+  # Run with: docker run --rm -i --network tika-mcp_default tika-mcp --tika-url http://tika:9998
